@@ -73,18 +73,21 @@ struct problem
 
 void solveInverseGP()
 {
-    geodeticProblem[0].dist += 1;
-    geodeticProblem[0].angle += 2;
+    //ToDo: implement mathematical algorithm
+    //geodeticProblem[0].dist += 1;
+    //geodeticProblem[0].angle += 2;
 }
 void solveDirectGP()
 {
-    geodeticProblem[1].p2Lat += 5;
-    geodeticProblem[1].p2Lon += 10;
+    //ToDo: implement mathematical algorithm
+    //geodeticProblem[1].p2Lat += 5;
+    //geodeticProblem[1].p2Lon += 10;
 }
 void solvePolarSP()
 {
-    geodeticProblem[2].p3Lat += 15;
-    geodeticProblem[2].p3Lon += 27;
+    //ToDo: implement mathematical algorithm
+    //geodeticProblem[2].p3Lat += 15;
+    //geodeticProblem[2].p3Lon += 27;
 }
 
 void updateValue()
