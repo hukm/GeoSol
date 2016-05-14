@@ -36,9 +36,10 @@ bool checked;
 
 class geodeticSolver{
 private:
-const double PI = 3.141592653589793238463;
+const double PI = 3.1415927;
 
 public:
+const int R = 6371;
 double rad2deg(double rad){return rad*180/PI;}
 double deg2rad(double deg){return deg*PI/180;}
 double directDistance(double x1, double y1, double x2, double y2)
@@ -57,6 +58,8 @@ double directAngle(double x1, double y1, double x2, double y2)
         return PI + asin(abs(x1 - x2)/b);
     else if (x1 > x2 && y2 > y1)
         return 1.5*PI + asin(abs(y1 - y2)/b);
+    else 
+        return 0;
 }
 
 };
@@ -66,72 +69,84 @@ struct problem
     double p1Lat, p1Lon, p2Lat, p2Lon, p3Lat, p3Lon;
     double dist, angle;
     bool solved;
-} geodeticProblem[3];                                       //We solve 3 different geodetic problems
+} GP[3];                                       //We solve 3 different geodetic problems
                                                             //0 - inverse geodetic problem
                                                             //1 - direct geodetic problem
                                                             //2 - polar serif problem
 
 void solveInverseGP()
 {
-    //ToDo: implement mathematical algorithm
-    //geodeticProblem[0].dist += 1;
-    //geodeticProblem[0].angle += 2;
+    geodeticSolver g;
+    
+    GP[0].dist = acos(sin(g.deg2rad(GP[0].p1Lat))*sin(g.deg2rad(GP[0].p2Lat)) + cos(g.deg2rad(GP[0].p1Lat))*cos(g.deg2rad(GP[0].p2Lat))*cos(g.deg2rad(GP[0].p1Lon-GP[0].p2Lon))*g.R);
+    GP[0].angle = g.rad2deg(g.directAngle(GP[0].p1Lat,GP[0].p2Lat,GP[0].p1Lon,GP[0].p2Lon));
 }
 void solveDirectGP()
 {
-    //ToDo: implement mathematical algorithm
-    //geodeticProblem[1].p2Lat += 5;
-    //geodeticProblem[1].p2Lon += 10;
+    geodeticSolver g;
+    
+    double relDist, angle, relp1Lat;
+    relDist = GP[1].dist / g.R;
+    relp1Lat = g.deg2rad(GP[1].p1Lat);
+    angle = g.deg2rad(GP[1].angle);
+    GP[1].p2Lat = g.rad2deg(asin(sin(relp1Lat)*cos(relDist) + cos(relp1Lat)*sin(relDist)*cos(angle)));
+    GP[1].p2Lon = GP[1].p1Lon + g.rad2deg(atan2(sin(angle)*sin(relDist)*cos(relp1Lat), cos(relDist)-sin(relp1Lat)*sin(g.deg2rad(GP[1].p2Lat))));
 }
 void solvePolarSP()
-{
-    //ToDo: implement mathematical algorithm
-    //geodeticProblem[2].p3Lat += 15;
-    //geodeticProblem[2].p3Lon += 27;
+{   
+    geodeticSolver g;
+    
+    double relDist, angle, relp1Lat;
+    angle = g.directAngle(GP[2].p1Lat,GP[2].p2Lat,GP[2].p1Lon,GP[2].p2Lon);
+    angle += g.deg2rad(GP[2].angle); //new angle to calculate direct problem 
+    relDist = GP[2].dist / g.R;
+    relp1Lat = g.deg2rad(GP[2].p1Lat);
+    GP[2].p3Lat = g.rad2deg(asin(sin(relp1Lat)*cos(relDist) + cos(relp1Lat)*sin(relDist)*cos(angle)));
+    GP[2].p3Lon = GP[2].p1Lon + g.rad2deg(atan2(sin(angle)*sin(relDist)*cos(relp1Lat), cos(relDist)-sin(relp1Lat)*sin(g.deg2rad(GP[2].p3Lat))));
 }
 
 void updateValue()
 {
     //updating of Inverse GP parameters    
     if (menuItem == 1 && menuPosition == 1){
-        geodeticProblem[0].p1Lat = lat;
-        geodeticProblem[0].p1Lon = lon;}
+        GP[0].p1Lat = lat;
+        GP[0].p1Lon = lon;}
     else if (menuItem == 1 && menuPosition == 2){
-        geodeticProblem[0].p2Lat = lat;
-        geodeticProblem[0].p2Lon = lon;}
+        GP[0].p2Lat = lat;
+        GP[0].p2Lon = lon;}
         
     //updating of Direct GP parameters 
     else if (menuItem == 2 && menuPosition == 1){
-        geodeticProblem[1].p1Lat = lat;
-        geodeticProblem[1].p1Lon = lon;}
+        GP[1].p1Lat = lat;
+        GP[1].p1Lon = lon;}
     else if (menuItem == 2 && menuPosition == 2){
-        geodeticProblem[1].dist = potDist;}
+        GP[1].dist = potDist;}
     else if (menuItem == 2 && menuPosition == 3){
-        geodeticProblem[1].angle = potAngle;}
+        GP[1].angle = potAngle;}
         
     //updating of Polar serif problem parameters 
     else if (menuItem == 3 && menuPosition == 1){
-        geodeticProblem[2].p1Lat = lat;
-        geodeticProblem[2].p1Lon = lon;}
+        GP[2].p1Lat = lat;
+        GP[2].p1Lon = lon;}
     else if (menuItem == 3 && menuPosition == 2){
-        geodeticProblem[2].p2Lat = lat;
-        geodeticProblem[2].p2Lon = lon;}
+        GP[2].p2Lat = lat;
+        GP[2].p2Lon = lon;}
     else if (menuItem == 3 && menuPosition == 3){
-        geodeticProblem[2].dist = potDist;}
+        GP[2].dist = potDist;}
     else if (menuItem == 3 && menuPosition == 4){
-        geodeticProblem[2].angle = potAngle;}
+        GP[2].angle = potAngle;}
         
     // Recalculate specific problem if entered parameters are enough for solution            
-    if (menuItem == 1 && (geodeticProblem[0].p1Lat != 0 || geodeticProblem[0].p1Lon != 0) && (geodeticProblem[0].p2Lat != 0 || geodeticProblem[0].p2Lon != 0)){
-        geodeticProblem[0].solved = true;
+    if (menuItem == 1 && (GP[0].p1Lat != 0 || GP[0].p1Lon != 0) && (GP[0].p2Lat != 0 || GP[0].p2Lon != 0)){
+        GP[0].solved = true;
         solveInverseGP();
     }
-    else if (menuItem == 2 && (geodeticProblem[1].p1Lat != 0 || geodeticProblem[1].p1Lon != 0)){
-        geodeticProblem[1].solved = true;
+    else if (menuItem == 2 && (GP[1].p1Lat != 0 || GP[1].p1Lon != 0)){
+        GP[1].solved = true;
         solveDirectGP();
     }
-    else if (menuItem == 3 && (geodeticProblem[2].p1Lat != 0 || geodeticProblem[2].p1Lon != 0) && (geodeticProblem[2].p2Lat != 0 || geodeticProblem[2].p2Lon != 0)){
-        geodeticProblem[2].solved = true;
+    else if (menuItem == 3 && (GP[2].p1Lat != 0 || GP[2].p1Lon != 0) && (GP[2].p2Lat != 0 || GP[2].p2Lon != 0)){
+        GP[2].solved = true;
         solvePolarSP();
     }
 }
@@ -195,8 +210,8 @@ void printMenu(int menuItem, int menuPosition)
                     sprintf(line1, "Point 1");
                     if (!checked){
                         sprintf(line2, "Click to change parameter");
-                        sprintf(latString, "%f", geodeticProblem[menuItem-1].p1Lat);
-                        sprintf(lonString, "%f", geodeticProblem[menuItem-1].p1Lon);  
+                        sprintf(latString, "%f", GP[menuItem-1].p1Lat);
+                        sprintf(lonString, "%f", GP[menuItem-1].p1Lon);  
                         strcpy(line3, latString);
                         strcat(line3, "  "); 
                         strcat(line3, lonString);
@@ -216,8 +231,8 @@ void printMenu(int menuItem, int menuPosition)
                     sprintf(line1, "Point 2");
                     if (!checked){
                         sprintf(line2, "Click to change parameter");
-                        sprintf(latString, "%f", geodeticProblem[menuItem-1].p2Lat);
-                        sprintf(lonString, "%f", geodeticProblem[menuItem-1].p2Lon);  
+                        sprintf(latString, "%f", GP[menuItem-1].p2Lat);
+                        sprintf(lonString, "%f", GP[menuItem-1].p2Lon);  
                         strcpy(line3, latString);
                         strcat(line3, "  "); 
                         strcat(line3, lonString);
@@ -236,14 +251,14 @@ void printMenu(int menuItem, int menuPosition)
                 case 3:
                     sprintf(line1, "Distance");
                     sprintf(line2, "between two points");
-                    sprintf(line3, "%f", geodeticProblem[menuItem-1].dist);
+                    sprintf(line3, "%f", GP[menuItem-1].dist);
                     break;
                 
                 //Angle
                 case 4:
                     sprintf(line1, "Angle");
                     sprintf(line2, "between two points");
-                    sprintf(line3, "%f", geodeticProblem[menuItem-1].angle);
+                    sprintf(line3, "%f", GP[menuItem-1].angle);
                     break;                        
             }
             break;
@@ -264,8 +279,8 @@ void printMenu(int menuItem, int menuPosition)
                     sprintf(line1, "Point 1");
                     if (!checked){
                         sprintf(line2, "Click to change parameter");
-                        sprintf(latString, "%f", geodeticProblem[menuItem-1].p1Lat);
-                        sprintf(lonString, "%f", geodeticProblem[menuItem-1].p1Lon);  
+                        sprintf(latString, "%f", GP[menuItem-1].p1Lat);
+                        sprintf(lonString, "%f", GP[menuItem-1].p1Lon);  
                         strcpy(line3, latString);
                         strcat(line3, "  "); 
                         strcat(line3, lonString);
@@ -285,7 +300,7 @@ void printMenu(int menuItem, int menuPosition)
                     sprintf(line1, "Distance");
                     if (!checked){
                         sprintf(line2, "Click to change parameter");
-                        sprintf(line3, "%0.3f", geodeticProblem[menuItem-1].dist);
+                        sprintf(line3, "%0.3f", GP[menuItem-1].dist);
                     }
                     else{
                         sprintf(line2, "Click to save parameter");
@@ -298,7 +313,7 @@ void printMenu(int menuItem, int menuPosition)
                     sprintf(line1, "Angle");
                     if (!checked){
                         sprintf(line2, "Click to change parameter");
-                        sprintf(line3, "%0.3f", geodeticProblem[menuItem-1].angle);
+                        sprintf(line3, "%0.3f", GP[menuItem-1].angle);
                     }
                     else{
                         sprintf(line2, "Click to save parameter");
@@ -309,8 +324,8 @@ void printMenu(int menuItem, int menuPosition)
                 //Point 2
                 case 4:
                     sprintf(line1, "Point 2");
-                    sprintf(latString, "%f", geodeticProblem[menuItem-1].p2Lat);
-                    sprintf(lonString, "%f", geodeticProblem[menuItem-1].p2Lon);  
+                    sprintf(latString, "%f", GP[menuItem-1].p2Lat);
+                    sprintf(lonString, "%f", GP[menuItem-1].p2Lon);  
                     strcpy(line2, latString);
                     strcat(line2, "  "); 
                     strcat(line2, lonString);
@@ -334,8 +349,8 @@ void printMenu(int menuItem, int menuPosition)
                     sprintf(line1, "Point 1");
                     if (!checked){
                         sprintf(line2, "Click to change parameter");
-                        sprintf(latString, "%f", geodeticProblem[menuItem-1].p1Lat);
-                        sprintf(lonString, "%f", geodeticProblem[menuItem-1].p1Lon);  
+                        sprintf(latString, "%f", GP[menuItem-1].p1Lat);
+                        sprintf(lonString, "%f", GP[menuItem-1].p1Lon);  
                         strcpy(line3, latString);
                         strcat(line3, "  "); 
                         strcat(line3, lonString);
@@ -355,8 +370,8 @@ void printMenu(int menuItem, int menuPosition)
                     sprintf(line1, "Point 2");
                     if (!checked){
                         sprintf(line2, "Click to change parameter");
-                        sprintf(latString, "%f", geodeticProblem[menuItem-1].p2Lat);
-                        sprintf(lonString, "%f", geodeticProblem[menuItem-1].p2Lon);  
+                        sprintf(latString, "%f", GP[menuItem-1].p2Lat);
+                        sprintf(lonString, "%f", GP[menuItem-1].p2Lon);  
                         strcpy(line3, latString);
                         strcat(line3, "  "); 
                         strcat(line3, lonString);
@@ -376,7 +391,7 @@ void printMenu(int menuItem, int menuPosition)
                     sprintf(line1, "Distance");
                     if (!checked){
                         sprintf(line2, "Click to change parameter");
-                        sprintf(line3, "%0.3f", geodeticProblem[menuItem-1].dist);
+                        sprintf(line3, "%0.3f", GP[menuItem-1].dist);
                     }
                     else{
                         sprintf(line2, "Click to save parameter");
@@ -389,7 +404,7 @@ void printMenu(int menuItem, int menuPosition)
                     sprintf(line1, "Angle");
                    if (!checked){
                         sprintf(line2, "Click to change parameter");
-                        sprintf(line3, "%0.3f", geodeticProblem[menuItem-1].angle);
+                        sprintf(line3, "%0.3f", GP[menuItem-1].angle);
                     }
                     else{
                         sprintf(line2, "Click to save parameter");
@@ -400,8 +415,8 @@ void printMenu(int menuItem, int menuPosition)
                 //Point 3  
                 case 5:
                     sprintf(line1, "Point 3");
-                    sprintf(latString, "%f", geodeticProblem[menuItem-1].p3Lat);
-                    sprintf(lonString, "%f", geodeticProblem[menuItem-1].p3Lon);  
+                    sprintf(latString, "%f", GP[menuItem-1].p3Lat);
+                    sprintf(lonString, "%f", GP[menuItem-1].p3Lon);  
                     strcpy(line2, latString);
                     strcat(line2, "  "); 
                     strcat(line2, lonString);
@@ -509,15 +524,15 @@ int main()
     menuPositionCount[3] = 6;
     for (int i=0; i<2; i++)
     {
-        geodeticProblem[i].p1Lat = 0;   
-        geodeticProblem[i].p1Lon = 0;
-        geodeticProblem[i].p2Lat = 0;   
-        geodeticProblem[i].p2Lon = 0;
-        geodeticProblem[i].p3Lat = 0;   
-        geodeticProblem[i].p3Lon = 0;
-        geodeticProblem[i].dist = 0;   
-        geodeticProblem[i].angle = 0;
-        geodeticProblem[i].solved = false; 
+        GP[i].p1Lat = 0;   
+        GP[i].p1Lon = 0;
+        GP[i].p2Lat = 0;   
+        GP[i].p2Lon = 0;
+        GP[i].p3Lat = 0;   
+        GP[i].p3Lon = 0;
+        GP[i].dist = 0;   
+        GP[i].angle = 0;
+        GP[i].solved = false; 
     };
     checked = false;
     int j=0;
