@@ -6,11 +6,11 @@
 using namespace std;
 
 namespace GeoSol {
-    
+
     int GeoFuncs::R = 6371; //Earth radius 
     double GeoFuncs::PI = 3.1415927; //PI value
     double GeoFuncs::f = 1 / 298.257223563; //flattening of ellipsoid
-    
+
     //convert radians to degrees 
     double GeoFuncs::rad2deg(double rad) {
         return rad * 180 / PI;
@@ -20,12 +20,12 @@ namespace GeoSol {
     double GeoFuncs::deg2rad(double deg) {
         return deg * PI / 180;
     }
-    
+
     //compute direct distance on the plane using simple Pythagorean theorem
     double GeoFuncs::directDistance(double x1, double y1, double x2, double y2) {
         return sqrt(pow((x1 - x2), 2) + pow((y1 - y2), 2));
     }
-    
+
     //compute azimuths on the plane using trigonometric functions
     double GeoFuncs::directAngle(double x1, double y1, double x2, double y2) {
         double b;
@@ -41,12 +41,12 @@ namespace GeoSol {
         else
             return 0;
     }
-    
+
     //compute distance between two points on sphere with radius R using solid geometry rules
     double GeoFuncs::inverseDistanceGP(double p1Lat, double p1Lon, double p2Lat, double p2Lon) {
         return acos(sin(deg2rad(p1Lat)) * sin(deg2rad(p2Lat)) + cos(deg2rad(p1Lat)) * cos(deg2rad(p2Lat)) * cos(deg2rad(p1Lon - p2Lon))) * R;
     }
-    
+
     //compute azimuth between two points on sphere using Vincenty's formula 
     double GeoFuncs::inverseAzimuthGP(double p1Lat, double p1Lon, double p2Lat, double p2Lon) {
         double U1, U2, L, C, lambda, sintheta, costheta, theta, sinalfa, cos2alfa, cos2theta;
@@ -54,7 +54,7 @@ namespace GeoSol {
         U2 = atan((1 - f) * tan(deg2rad(p2Lat))); //reduced latitude (latitude on the auxiliary sphere)
         L = p2Lon - p1Lon; //difference in longitude
         lambda = L; //starting value for lambda
-        
+
         //wait while lamda converges to 10^(-8) which is sufficiently enough accuracy for us
         while (abs(lambda) >= 0.00000001) {
             sintheta = sqrt(pow(cos(U2) * sin(lambda), 2) + pow(cos(U1) * sin(U2) - sin(U1) * cos(U2) * cos(lambda), 2));
@@ -66,42 +66,38 @@ namespace GeoSol {
             C = f / 16 * cos2alfa * (4 + f * (4 - 3 * cos2alfa));
             lambda = L + (1 - C) * f * sinalfa * (theta + C * sintheta * (cos2theta + C * costheta * (1 * pow(cos2theta, 2) - 1)));
         }
-        
+
         //and then use this lambda in formula 
-        return rad2deg(atan2(cos(U2) * sin(lambda), (cos(U1) * sin(U2) - sin(U1) * cos(U2) * cos(lambda)))); 
+        return rad2deg(atan2(cos(U2) * sin(lambda), (cos(U1) * sin(U2) - sin(U1) * cos(U2) * cos(lambda))));
     }
-    
+
     //compute latitude of point on sphere from direct problem using solid geometry rules 
-    double GeoFuncs::directLatGP(double p1Lat, double p1Lon, double angle, double dist)
-    {
+    double GeoFuncs::directLatGP(double p1Lat, double p1Lon, double angle, double dist) {
         double relDist, relp1Lat;
         relDist = dist / R;
         relp1Lat = deg2rad(p1Lat);
         angle = deg2rad(angle);
         return rad2deg(asin(sin(relp1Lat) * cos(relDist) + cos(relp1Lat) * sin(relDist) * cos(angle)));
     }
-    
+
     //compute longitude of point on sphere from direct problem using solid geometry rules
-    double GeoFuncs::directLonGP(double p1Lat, double p1Lon, double angle, double dist)
-    {
+    double GeoFuncs::directLonGP(double p1Lat, double p1Lon, double angle, double dist) {
         double relDist, relp1Lat;
         relDist = dist / R;
         relp1Lat = deg2rad(p1Lat);
         angle = deg2rad(angle);
-        return p1Lon + rad2deg(atan2(sin(angle) * sin(relDist) * cos(relp1Lat), 
-                    cos(relDist) - sin(relp1Lat) * sin(relp1Lat) * cos(relDist) + cos(relp1Lat) * sin(relDist) * cos(angle)));
+        return p1Lon + rad2deg(atan2(sin(angle) * sin(relDist) * cos(relp1Lat),
+            cos(relDist) - sin(relp1Lat) * sin(relp1Lat) * cos(relDist) + cos(relp1Lat) * sin(relDist) * cos(angle)));
     }
-    
+
     //compute latitude of point on sphere from polar problem using solid geometry rules 
-    double GeoFuncs::polarLatGP(double p1Lat, double p1Lon, double p2Lat, double p2Lon, double angle, double dist)
-    {
+    double GeoFuncs::polarLatGP(double p1Lat, double p1Lon, double p2Lat, double p2Lon, double angle, double dist) {
         angle += inverseAzimuthGP(p1Lat, p1Lon, p2Lat, p2Lon);
         return directLatGP(p1Lat, p1Lon, angle, dist);
     }
 
     //compute longitude of point on sphere from polar problem using solid geometry rules 
-    double GeoFuncs::polarLonGP(double p1Lat, double p1Lon, double p2Lat, double p2Lon, double angle, double dist)
-    {
+    double GeoFuncs::polarLonGP(double p1Lat, double p1Lon, double p2Lat, double p2Lon, double angle, double dist) {
         angle += inverseAzimuthGP(p1Lat, p1Lon, p2Lat, p2Lon);
         return directLonGP(p1Lat, p1Lon, angle, dist);
     }
