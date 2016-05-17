@@ -10,27 +10,35 @@
 using namespace std;
 using namespace GeoSol;
 
-C12832 lcd(D11, D13, D12, D7, D10);
+//display is connected to these digital pins
+C12832 lcd(D11, D13, D12, D7, D10); 
+//joystick is connected to these digital pins
 DigitalIn Up(A2);
 DigitalIn Down(A3);
 DigitalIn Left(A5);
 DigitalIn Right(A4);
 DigitalIn Click(D4);
+//LED RGB is connected to these digital pins
 PwmOut r(D5);
 PwmOut g(D8);
 PwmOut b(D9);
+//two potentiometers are connected to these digital pins
 AnalogIn pot1(A0);
 AnalogIn pot2(A1);
 
 TinyGPS gpsr;
 GeoFuncs gf;
 Serial serial_gps(D1, D0); //tx,rx
-char * joystickPos = "CENTRE";
+char *joystickPos = "CENTRE";
 char latString[10] = "";
 char lonString[10] = "";
+//current menu item
 int menuItem = 0;
+//current position in given menu item
 int menuPosition = 0;
+//amount of menu items
 int menuItemCount = 4;
+//this vector stores number of positions in each menu item
 vector < int > menuPositionCount(menuItemCount);
 
 double lat, lon;
@@ -38,6 +46,7 @@ unsigned long age;
 double potDist, potAngle;
 bool checked;
 
+//structure, which keeps all the values (both input and output) for all the problems
 struct problem {
     double p1Lat, p1Lon, p2Lat, p2Lon, p3Lat, p3Lon;
     double dist, angle;
@@ -47,7 +56,9 @@ struct problem {
             //1 - direct geodetic problem
             //2 - polar serif problem
 
+//this procedure allows us to change input data live
 void updateValue() {
+    
     //updating of Inverse GP parameters
     if (menuItem == 1 && menuPosition == 1) {
         GP[0].p1Lat = lat;
@@ -81,6 +92,7 @@ void updateValue() {
     }
 
     // Recalculate specific problem if entered parameters are enough for solution
+    // Here all the magic happens
     if (menuItem == 1 && (GP[0].p1Lat != 0 || GP[0].p1Lon != 0) && (GP[0].p2Lat != 0 || GP[0].p2Lon != 0)) {
         
         GP[0].solved = true;
@@ -101,12 +113,16 @@ void updateValue() {
     }
 }
 
+//this procedure prints prints correct information on the display with corresponding menu item and position
 void printMenu(int menuItem, int menuPosition) {
-    static char last_line1[30] = "", last_line2[30] = "", last_line3[30] = ""; // keep the data which was printed before
-    char line1[30] = "", line2[30] = "", line3[30] = ""; // and not update display in case lines haven't changed
+    // keep the data which was printed before
+    // and not update display in case lines haven't changed
+    static char last_line1[30] = "", last_line2[30] = "", last_line3[30] = ""; 
+    char line1[30] = "", line2[30] = "", line3[30] = ""; 
     // otherwise display will blink each second on update
+    
     switch (menuItem) {
-        //Instruction set
+    //Instruction set
     case 0:
         switch (menuPosition) {
         case 0:
@@ -141,17 +157,17 @@ void printMenu(int menuItem, int menuPosition) {
         }
         break;
 
-        //Inverse geodetic problem
+    //Inverse geodetic problem
     case 1:
         switch (menuPosition) {
-            //Title
+        //Title
         case 0:
             sprintf(line1, "          Inverse");
             sprintf(line2, "      geodetic problem");
             sprintf(line3, "");
             break;
 
-            //Point 1
+        //Point 1
         case 1:
             sprintf(line1, "Point 1");
             if (!checked) {
@@ -171,7 +187,7 @@ void printMenu(int menuItem, int menuPosition) {
             }
             break;
 
-            //Point 2
+        //Point 2
         case 2:
             sprintf(line1, "Point 2");
             if (!checked) {
@@ -191,7 +207,7 @@ void printMenu(int menuItem, int menuPosition) {
             }
             break;
 
-            //Distance
+        //Distance
         case 3:
             sprintf(line1, "Distance");
             sprintf(line2, "between two points");
@@ -207,17 +223,17 @@ void printMenu(int menuItem, int menuPosition) {
         }
         break;
 
-        //Direct geodetic problem
+    //Direct geodetic problem
     case 2:
         switch (menuPosition) {
-            //Title
+        //Title
         case 0:
             sprintf(line1, "          Direct"); //
             sprintf(line2, "      geodetic problem");
             sprintf(line3, "");
             break;
 
-            //Point 1
+        //Point 1
         case 1:
             sprintf(line1, "Point 1");
             if (!checked) {
@@ -237,7 +253,7 @@ void printMenu(int menuItem, int menuPosition) {
             }
             break;
 
-            //Distance
+        //Distance
         case 2:
             sprintf(line1, "Distance");
             if (!checked) {
@@ -249,7 +265,7 @@ void printMenu(int menuItem, int menuPosition) {
             }
             break;
 
-            //Angle
+        //Angle
         case 3:
             sprintf(line1, "Angle");
             if (!checked) {
@@ -261,7 +277,7 @@ void printMenu(int menuItem, int menuPosition) {
             }
             break;
 
-            //Point 2
+        //Point 2
         case 4:
             sprintf(line1, "Point 2");
             sprintf(latString, "%f", GP[menuItem - 1].p2Lat);
@@ -272,18 +288,18 @@ void printMenu(int menuItem, int menuPosition) {
             break;
         }
         break;
-        //Polar serif problem
+    //Polar serif problem
     case 3:
         switch (menuPosition) {
 
-            //Title
+        //Title
         case 0:
             sprintf(line1, "           Polar");
             sprintf(line2, "        serif problem");
             sprintf(line3, "");
             break;
 
-            //Point 1
+        //Point 1
         case 1:
             sprintf(line1, "Point 1");
             if (!checked) {
@@ -303,7 +319,7 @@ void printMenu(int menuItem, int menuPosition) {
             }
             break;
 
-            //Point 2
+        //Point 2
         case 2:
             sprintf(line1, "Point 2");
             if (!checked) {
@@ -323,7 +339,7 @@ void printMenu(int menuItem, int menuPosition) {
             }
             break;
 
-            //Distance
+        //Distance
         case 3:
             sprintf(line1, "Distance");
             if (!checked) {
@@ -335,7 +351,7 @@ void printMenu(int menuItem, int menuPosition) {
             }
             break;
 
-            //Angle
+        //Angle
         case 4:
             sprintf(line1, "Angle");
             if (!checked) {
@@ -347,7 +363,7 @@ void printMenu(int menuItem, int menuPosition) {
             }
             break;
 
-            //Point 3
+        //Point 3
         case 5:
             sprintf(line1, "Point 3");
             sprintf(latString, "%f", GP[menuItem - 1].p3Lat);
@@ -359,9 +375,11 @@ void printMenu(int menuItem, int menuPosition) {
         }
         break;
     }
-
-    if (strcmp(line1, last_line1) != 0 || strcmp(line2, last_line2) != 0 || strcmp(line3, last_line3) != 0) //here the comparison is held
-    { //and displaying of data as well
+    
+    //compare previous and current lines of display and update iff needed
+    //otherwise display blinks each 100 milliseconds
+    if (strcmp(line1, last_line1) != 0 || strcmp(line2, last_line2) != 0 || strcmp(line3, last_line3) != 0)
+    {
         lcd.cls();
         lcd.locate(0, 0);
         lcd.printf(line1);
@@ -377,6 +395,7 @@ void printMenu(int menuItem, int menuPosition) {
     }
 }
 
+//change menu item and position with joystick here
 void setMenu() {
     if (Down) {
         joystickPos = "DOWN";
@@ -417,19 +436,23 @@ void setMenu() {
         joystickPos = "CENTRE";
 }
 
-void menu_loop(void
-    const * args) {
+//additional thread to respond and update menu each 100 milliseconds
+//something like external interrupt
+void menu_loop(void const * args) {
     int count = 0;
     while (true) {
-        setMenu(); //Response on button press each 100 milliseconds
+        // and not update display in case lines haven't changed
+        setMenu(); 
         if (++count % 2 == 0) {
-            printMenu(menuItem, menuPosition); //Update menu each half a second in order to update values
+            printMenu(menuItem, menuPosition); // update menu each half a second in order to update values live
             count = 0;
         }
-        Thread::wait(100);
+        Thread::wait(100); //delay is here
     }
 }
 
+//procedure to turn off LED
+//LED is connected in reversed state, so 1 means off
 void ledOff() {
     r = 1.0;
     g = 1.0;
@@ -437,10 +460,13 @@ void ledOff() {
 }
 
 int main() {
+    //set number of menu positions for each menu item
     menuPositionCount[0] = 5;
     menuPositionCount[1] = 5;
     menuPositionCount[2] = 5;
     menuPositionCount[3] = 6;
+    
+    //set all values to 0
     for (int i = 0; i < 2; i++) {
         GP[i].p1Lat = 0;
         GP[i].p1Lon = 0;
@@ -452,13 +478,13 @@ int main() {
         GP[i].angle = 0;
         GP[i].solved = false;
     };
-
-    GP[0].p1Lat = 50.08;
-    GP[0].p1Lon = 14.410;
-
+    
+    // bool value to switch between changing and saving values
     checked = false;
     int j = 0;
+    //clear the display
     lcd.cls();
+    //a bit of animation in the beginning
     while (j < 128) {
         lcd.locate(j, 0);
         lcd.pixel(j, 0, 1);
@@ -469,11 +495,14 @@ int main() {
     }
     lcd.locate(32, 12);
     lcd.printf("GeoSol device");
-
+    
+    //set serial connection speed for GPS module
     serial_gps.baud(9600);
     wait(1.0);
+    //run the subthread for menu displaying  
     Thread menu_thread(menu_loop);
-
+    
+    //continious update of gps and potentiometers input
     while (true) {
         if (serial_gps.readable()) {
             char c = serial_gps.getc();
