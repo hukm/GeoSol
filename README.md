@@ -6,6 +6,9 @@ Three problems will be solved: Direct geodetic problem, Inverse geodetic problem
 
 Microcontroller reads data from GPS-module and potentiometers to use it as an input in geodetic problems. Output is viewed on small screen and can be exported to SD-card.
 
+# Demo
+https://www.youtube.com/watch?v=wYdfMhwXWZA&feature=youtu.be
+
 ##Hardware  
 -<a href="https://developer.mbed.org/platforms/IBMEthernetKit/?cm_mc_uid=15423806122714366318128&cm_mc_sid_50200000=1459858340">ARM® Cortex™-M4 Core Starter Kit</a> 
 
